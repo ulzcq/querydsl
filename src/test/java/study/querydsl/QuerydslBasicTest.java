@@ -116,4 +116,28 @@ public class QuerydslBasicTest {
         assertThat(result1.size()).isEqualTo(1);
     }
 
+    /** 결과 조회 */
+    @Test
+    public void resultFetch(){
+        //List. 데이터 없으면 빈 리스트 반환(null 체크 필요X)
+        List<Member> fetch = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        //단 건. 결과가 없으면 null, 둘 이상이면 NonUniqueResultException
+        Member findMember1 = queryFactory
+                .selectFrom(member)
+                .fetchOne();
+
+        //처음 한 건 조회
+        Member findMember2 = queryFactory
+                .selectFrom(member)
+                .fetchFirst(); //limit(1).fetchOne()과 같다
+
+        //fetchResults, fetchCount deprecated
+        //이유: group by having 절을 사용하는 등의 복잡한 쿼리에서는 잘 작동하지 않음
+        //컨텐츠를 가져오는 쿼리, total count 쿼리 따로 작성할 것
+        //fetchCount 대신 fetch().size()를 사용할 것
+    }
+
 }
