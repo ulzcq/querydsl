@@ -169,6 +169,29 @@ public class QuerydslBasicTest {
         assertThat(memberNull.getUsername()).isNull();
     }
 
+    /**
+     * 페이징
+     * - 조회 건수 제한
+     * - 전체 조회 수가 필요하면 따로 count 쿼리 작성
+     */
+    @Test
+    public void paging1() {
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1) //0부터 시작(zero index)
+                .limit(2) //최대 2건 조회
+                .fetch();
+
+        assertThat(result.size()).isEqualTo(2);
+
+        //total count 쿼리
+        int totalSize = queryFactory
+                .selectFrom(member)
+                .fetch().size();
+
+        assertThat(totalSize).isEqualTo(4);
+    }
 
 
 }
