@@ -14,7 +14,9 @@ import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceUnit;
 
 import java.util.List;
 
@@ -355,5 +357,48 @@ public class QuerydslBasicTest {
         for (Tuple tuple : result) {
             System.out.println("t=" + tuple);
         }
+    }
+
+    /**
+     * 페치 조인 미적용
+     * - 지연로딩으로 Member, Team SQL 쿼리 각각 실행
+     */
+    @PersistenceUnit
+    EntityManagerFactory emf;
+
+    @Test
+    public void fetchJoinNo() throws Exception {
+        em.flush();
+        em.clear();
+        //페치 조인 테스트 할 때는 영속성 컨텍스트를 날리지 않으면 결과를 보기 어려움
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam()); //초기화 된 엔티티인지 확인
+        assertThat(loaded).as("페치 조인 미적용").isFalse();
+    }
+
+    /**
+     * 페치 조인 적용
+     * - 즉시로딩으로 Member, Team SQL 쿼리 조인으로 한번에 조회
+     * - join(), leftJoin() 등 조인 기능 뒤에 fetchJoin() 이라고 추가
+     * - 페치 조인에 대한 자세한 내용은 JPA 기본편이나, 활용 2편을 참고
+     */
+    @Test
+    public void fetchJoinUse() throws Exception {
+        em.flush();
+        em.clear();
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin() //페치 조인
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+        assertThat(loaded).as("페치 조인 적용").isTrue();
     }
 }
