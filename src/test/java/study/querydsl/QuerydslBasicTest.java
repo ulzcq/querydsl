@@ -4,6 +4,7 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -558,5 +559,40 @@ public class QuerydslBasicTest {
         }
     }
 
+    /** 상수, 문자 더하기
+     * - 상수가 필요하면 Expressions.constant(xxx) 사용
+     * - 한번씩 필요할 때가 있음
+     *
+     * > 참고: 아래와 같이 최적화가 가능하면 SQL에 constant 값을 넘기지 않는다.
+     * 상수를 더하는 것 처럼 최적화가 어려우면 SQL에 constant 값을 넘긴다.
+     */
+    @Test
+    public void constant() throws Exception{
+        Tuple result = queryFactory
+                .select(member.username, Expressions.constant("A"))
+                .from(member)
+                .fetchFirst();
+
+        System.out.println("result = " + result);
+    }
+
+    /**
+     * 문자 더하기 concat
+     *
+     * > 참고: member.age.stringValue() 부분이 중요한데, 문자가 아닌 다른 타입들은 stringValue() 로
+     * 문자로 변환할 수 있다. 이 방법은 ENUM을 처리할 때도 자주 사용한다.
+     */
+    @Test
+    public void concat() throws Exception{
+
+        //{username}_{age}
+        String result = queryFactory
+                .select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        System.out.println("result = " + result);
+    }
 
 }
