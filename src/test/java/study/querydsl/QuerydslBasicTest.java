@@ -819,4 +819,54 @@ public class QuerydslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    /** 수정 벌크 연산
+     * - 쿼리 한번으로 대량 데이터 수정
+     *
+     * > 주의: JPQL 배치와 마찬가지로, 영속성 컨텍스트에 있는 엔티티를 무시하고 실행되기 때문에
+     * 배치 쿼리를 실행하고 나면 영속성 컨텍스트를 초기화 하는 것이 안전하다.
+     */
+    @Test
+    public void bulkUpdate() {
+
+        //member 1 = 10 -> DB 비회원
+        //member 2 = 20 -> DB 비회원
+        //member 3 = 30 -> DB member3
+        //member 4 = 40 -> DB member4
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    @Test
+    public void bulkAdd() {
+        //기존 숫자에 1 더하기
+        long count2 = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1)) //뺴고 싶으면 add(-숫자), 곱하기는 multiply
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    /** 삭제 벌크 연산
+     * > 주의: JPQL 배치와 마찬가지로, 영속성 컨텍스트에 있는 엔티티를 무시하고 실행되기 때문에
+     * 배치 쿼리를 실행하고 나면 영속성 컨텍스트를 초기화 하는 것이 안전하다.
+     */
+    @Test
+    public void bulkDelete() {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
 }
