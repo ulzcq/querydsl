@@ -3,6 +3,8 @@ package study.querydsl;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.group.GroupBy;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
 import study.querydsl.entity.QTeam;
@@ -593,6 +597,43 @@ public class QuerydslBasicTest {
                 .fetchOne();
 
         System.out.println("result = " + result);
+    }
+
+    /**
+     * 프로젝션 결과 반환 - 기본
+     * - 프로젝션 대상이 하나면 타입을 명확하게 지정할 수 있음
+     */
+    @Test
+    public void simpleProjection() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    /**
+     * 프로젝션 결과 반환 - 튜플 조회
+     * - 프로젝션 대상이 둘 이상이면 튜플이나 DTO로 조회
+     * - 튜플은 Querydsl이 제공하며 여러 타입을 저장할 때 사용
+     *   - 리파지토리 계층 까지만 쓰고 컨트롤러나 서비스 계층이 모르게 해야함(DTO로 변환)
+     */
+    @Test
+    public void tupleProjection() {
+        List<Tuple> result = queryFactory
+                .select(member.username, member.age)
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+            System.out.println("username=" + username);
+            System.out.println("age=" + age);
+        }
     }
 
 }
