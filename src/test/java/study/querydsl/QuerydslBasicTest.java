@@ -636,4 +636,99 @@ public class QuerydslBasicTest {
         }
     }
 
+    /**
+     * 프로젝션 결과 반환 - DTO 조회
+     * - 프로젝션 대상이 둘 이상이면 튜플이나 DTO로 조회
+     * - 쿼리 날릴 때 최적화해서 필요한 것만 가져오고 싶을 때
+     *
+     * - 순수 JPA에서 DTO를 조회할 때는 new 명령어를 사용해야함
+     * - DTO의 package이름을 다 적어줘야해서 지저분함
+     * - 생성자 방식만 지원함
+     */
+    @Test
+    public void findDtoByJPQL(){
+
+        List<MemberDto> result = em.createQuery(
+                "select new study.querydsl.dto.MemberDto(m.username, m.age) " +
+                        "from Member m", MemberDto.class)
+                .getResultList();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * 프로젝션 결과 반환 - DTO 조회
+     *
+     * - Querydsl 빈 생성(Bean population)
+     * - 결과를 DTO 반환할 때 사용, 다음 3가지 방법 지원
+     * 1. 프로퍼티 접근
+     */
+    @Test
+    public void findDtoBySetter (){
+        //프로퍼티 접근 - Setter
+        List<MemberDto> result = queryFactory
+                .select(Projections.bean(MemberDto.class, //dto get/setter, default 생성자 필요
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /** 2. 필드 직접 접근 */
+    @Test
+    public void findDtoByField() {
+        List<MemberDto> result = queryFactory
+                .select(Projections.fields(MemberDto.class, //private 이어도 상관없이 필드에 꽂힘
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /** 2. 필드 직접 접근 - 별칭 부여 */
+    @Test
+    public void findUserDtoByField() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<UserDto> fetch = queryFactory
+                .select(Projections.fields(UserDto.class,
+                        member.username.as("name"), //필드명.as("dto 별칭")
+                        ExpressionUtils.as(
+                                JPAExpressions
+                                        .select(memberSub.age.max()) //억지 쿼리긴 한디 max 나이로 다 찍는거
+                                        .from(memberSub), "age") //서브 쿼리의 결과가 age에 매칭되서 들어감
+                        )
+                ).from(member)
+                .fetch();
+
+        for (UserDto userdto : fetch) {
+            System.out.println("memberDto = " + userdto);
+        }
+    }
+
+    /** 3. 생성자 사용 */
+    @Test
+    public void findDtoByConstructor() {
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class, //필드 타입이 딱 맞아야함
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
 }
